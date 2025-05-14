@@ -3,29 +3,21 @@
 namespace App\Controller;
 
 use App\Entity\User;
-use App\Repository\UserRepositoryInterface;
-use Doctrine\ORM\EntityManagerInterface;
-use Lexik\Bundle\JWTAuthenticationBundle\Services\JWTTokenManagerInterface;
+use App\Service\AuthServiceInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
-use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\Security\Core\Authentication\Token\Storage\TokenStorageInterface;
 use Symfony\Component\Security\Core\Authentication\Token\TokenInterface;
-use Symfony\Component\Validator\Validator\ValidatorInterface;
 use Symfony\Component\Security\Http\Attribute\CurrentUser;
 
 #[Route('/api/auth')]
 class AuthController extends AbstractController
 {
     public function __construct(
-        private readonly UserPasswordHasherInterface $passwordHasher,
-        private readonly JWTTokenManagerInterface $jwtManager,
-        private readonly EntityManagerInterface $entityManager,
-        private readonly ValidatorInterface $validator,
-        private readonly UserRepositoryInterface $userRepository
+        private readonly AuthServiceInterface $authService
     ) {
     }
 
@@ -35,37 +27,13 @@ class AuthController extends AbstractController
         try {
             $data = json_decode($request->getContent(), true);
             
-            $user = new User();
-            $user->setEmail($data['email'] ?? '');
-            $user->setFirstName($data['firstName'] ?? '');
-            $user->setLastName($data['lastName'] ?? '');
-            $user->setPlainPassword($data['password'] ?? '');
+            $result = $this->authService->register($data);
             
-            // Validate the user entity
-            $errors = $this->validator->validate($user, null, ['user:create']);
-            if (count($errors) > 0) {
-                $errorMessages = [];
-                foreach ($errors as $error) {
-                    $errorMessages[$error->getPropertyPath()] = $error->getMessage();
-                }
-                return $this->json(['errors' => $errorMessages], Response::HTTP_BAD_REQUEST);
+            if (isset($result['errors'])) {
+                return $this->json(['errors' => $result['errors']], Response::HTTP_BAD_REQUEST);
             }
             
-            // Hash the password
-            $hashedPassword = $this->passwordHasher->hashPassword($user, $user->getPlainPassword());
-            $user->setPassword($hashedPassword);
-            
-            // Save the user
-            $this->entityManager->persist($user);
-            $this->entityManager->flush();
-            
-            // Create JWT token
-            $token = $this->jwtManager->create($user);
-            
-            return $this->json([
-                'user' => $user,
-                'token' => $token
-            ], Response::HTTP_CREATED, [], ['groups' => ['user:read']]);
+            return $this->json($result, Response::HTTP_CREATED, [], ['groups' => ['user:read']]);
         } catch (\Exception $e) {
             return $this->json(['error' => 'Could not register user: ' . $e->getMessage()], Response::HTTP_INTERNAL_SERVER_ERROR);
         }
@@ -77,29 +45,16 @@ class AuthController extends AbstractController
         try {
             $data = json_decode($request->getContent(), true);
             
-            // Find user by email
-            $user = $this->userRepository->findByEmail($data['email'] ?? '');
+            $result = $this->authService->login(
+                $data['email'] ?? '',
+                $data['password'] ?? ''
+            );
             
-            if (!$user) {
+            if (!$result) {
                 return $this->json(['error' => 'Invalid credentials'], Response::HTTP_UNAUTHORIZED);
             }
             
-            // Verify password
-            if (!$this->passwordHasher->isPasswordValid($user, $data['password'] ?? '')) {
-                return $this->json(['error' => 'Invalid credentials'], Response::HTTP_UNAUTHORIZED);
-            }
-            
-            // Update last login
-            $user->setLastLogin(new \DateTimeImmutable());
-            $this->entityManager->flush();
-            
-            // Create JWT token
-            $token = $this->jwtManager->create($user);
-            
-            return $this->json([
-                'user' => $user,
-                'token' => $token
-            ], Response::HTTP_OK, [], ['groups' => ['user:read']]);
+            return $this->json($result, Response::HTTP_OK, [], ['groups' => ['user:read']]);
         } catch (\Exception $e) {
             return $this->json(['error' => 'Login failed: ' . $e->getMessage()], Response::HTTP_INTERNAL_SERVER_ERROR);
         }
