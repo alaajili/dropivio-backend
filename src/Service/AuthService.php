@@ -49,13 +49,7 @@ class AuthService implements AuthServiceInterface
         
         return UserResponse::fromEntity($user, $token);
     }
-    
-    /**
-     * Authenticate a user and return their details with token
-     *
-     * @param LoginRequest $loginRequest User login data
-     * @return UserResponse|null UserResponse with token, or null if authentication fails
-     */
+
     public function login(LoginRequest $loginRequest): ?UserResponse
     {
         $errors = $this->validator->validate($loginRequest);
