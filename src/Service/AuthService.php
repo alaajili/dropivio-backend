@@ -2,7 +2,9 @@
 
 namespace App\Service;
 
-use App\Entity\User;
+use App\DTO\LoginRequest;
+use App\DTO\RegisterRequest;
+use App\DTO\UserResponse;
 use App\Repository\UserRepositoryInterface;
 use Doctrine\ORM\EntityManagerInterface;
 use Lexik\Bundle\JWTAuthenticationBundle\Services\JWTTokenManagerInterface;
@@ -19,22 +21,10 @@ class AuthService implements AuthServiceInterface
         private readonly UserRepositoryInterface $userRepository
     ) {
     }
-    
-    /**
-     * Register a new user
-     *
-     * @param array $userData User registration data
-     * @return array Array containing user and token, or errors
-     */
-    public function register(array $userData): array
+
+    public function register(RegisterRequest $registerRequest): UserResponse|array
     {
-        $user = new User();
-        $user->setEmail($userData['email'] ?? '');
-        $user->setFirstName($userData['firstName'] ?? '');
-        $user->setLastName($userData['lastName'] ?? '');
-        $user->setPlainPassword($userData['password'] ?? '');
-        
-        $errors = $this->validator->validate($user, null, ['user:create']);
+        $errors = $this->validator->validate($registerRequest);
         if (count($errors) > 0) {
             $errorMessages = [];
             foreach ($errors as $error) {
@@ -42,6 +32,12 @@ class AuthService implements AuthServiceInterface
             }
             return ['errors' => $errorMessages];
         }
+        
+        if ($this->userRepository->findByEmail($registerRequest->email)) {
+            return ['errors' => ['email' => 'Email already exists']];
+        }
+
+        $user = RegisterRequest::toUser($registerRequest);
         
         $hashedPassword = $this->passwordHasher->hashPassword($user, $user->getPlainPassword());
         $user->setPassword($hashedPassword);
@@ -51,28 +47,29 @@ class AuthService implements AuthServiceInterface
         
         $token = $this->jwtManager->create($user);
         
-        return [
-            'user' => $user,
-            'token' => $token
-        ];
+        return UserResponse::fromEntity($user, $token);
     }
     
     /**
      * Authenticate a user and return their details with token
      *
-     * @param string $email User email
-     * @param string $password User password
-     * @return array|null Array containing user and token, or null if authentication fails
+     * @param LoginRequest $loginRequest User login data
+     * @return UserResponse|null UserResponse with token, or null if authentication fails
      */
-    public function login(string $email, string $password): ?array
+    public function login(LoginRequest $loginRequest): ?UserResponse
     {
-        $user = $this->userRepository->findByEmail($email);
+        $errors = $this->validator->validate($loginRequest);
+        if (count($errors) > 0) {
+            return null;
+        }
+        
+        $user = $this->userRepository->findByEmail($loginRequest->email);
         
         if (!$user) {
             return null;
         }
         
-        if (!$this->passwordHasher->isPasswordValid($user, $password)) {
+        if (!$this->passwordHasher->isPasswordValid($user, $loginRequest->password)) {
             return null;
         }
         
@@ -81,9 +78,6 @@ class AuthService implements AuthServiceInterface
         
         $token = $this->jwtManager->create($user);
         
-        return [
-            'user' => $user,
-            'token' => $token
-        ];
+        return UserResponse::fromEntity($user, $token);
     }
 }

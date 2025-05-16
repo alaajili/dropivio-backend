@@ -2,6 +2,9 @@
 
 namespace App\Controller;
 
+use App\DTO\LoginRequest;
+use App\DTO\RegisterRequest;
+use App\DTO\UserResponse;
 use App\Entity\User;
 use App\Service\AuthServiceInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -12,12 +15,16 @@ use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\Security\Core\Authentication\Token\Storage\TokenStorageInterface;
 use Symfony\Component\Security\Core\Authentication\Token\TokenInterface;
 use Symfony\Component\Security\Http\Attribute\CurrentUser;
+use Symfony\Component\Serializer\SerializerInterface;
+use Symfony\Component\Validator\Validator\ValidatorInterface;
 
 #[Route('/api/auth')]
 class AuthController extends AbstractController
 {
     public function __construct(
-        private readonly AuthServiceInterface $authService
+        private readonly AuthServiceInterface $authService,
+        private readonly SerializerInterface $serializer,
+        private readonly ValidatorInterface $validator
     ) {
     }
 
@@ -25,15 +32,18 @@ class AuthController extends AbstractController
     public function register(Request $request): JsonResponse
     {
         try {
-            $data = json_decode($request->getContent(), true);
+            $registerRequest = $this->serializer->deserialize(
+                $request->getContent(),
+                RegisterRequest::class,
+                'json'
+            );
             
-            $result = $this->authService->register($data);
-            
+            $result = $this->authService->register($registerRequest);
             if (isset($result['errors'])) {
                 return $this->json(['errors' => $result['errors']], Response::HTTP_BAD_REQUEST);
             }
             
-            return $this->json($result, Response::HTTP_CREATED, [], ['groups' => ['user:read']]);
+            return $this->json($result, Response::HTTP_CREATED);
         } catch (\Exception $e) {
             return $this->json(['error' => 'Could not register user: ' . $e->getMessage()], Response::HTTP_INTERNAL_SERVER_ERROR);
         }
@@ -43,18 +53,19 @@ class AuthController extends AbstractController
     public function login(Request $request): JsonResponse
     {
         try {
-            $data = json_decode($request->getContent(), true);
-            
-            $result = $this->authService->login(
-                $data['email'] ?? '',
-                $data['password'] ?? ''
+            $loginRequest = $this->serializer->deserialize(
+                $request->getContent(), 
+                LoginRequest::class, 
+                'json'
             );
             
-            if (!$result) {
+            $userResponse = $this->authService->login($loginRequest);
+            
+            if (!$userResponse) {
                 return $this->json(['error' => 'Invalid credentials'], Response::HTTP_UNAUTHORIZED);
             }
             
-            return $this->json($result, Response::HTTP_OK, [], ['groups' => ['user:read']]);
+            return $this->json(['user' => $userResponse], Response::HTTP_OK);
         } catch (\Exception $e) {
             return $this->json(['error' => 'Login failed: ' . $e->getMessage()], Response::HTTP_INTERNAL_SERVER_ERROR);
         }
@@ -67,9 +78,11 @@ class AuthController extends AbstractController
             return $this->json(['error' => 'Not authenticated'], Response::HTTP_UNAUTHORIZED);
         }
         
+        $userResponse = UserResponse::fromEntity($user, '');
+        
         return $this->json([
-            'user' => $user
-        ], Response::HTTP_OK, [], ['groups' => ['user:read']]);
+            'user' => $userResponse
+        ], Response::HTTP_OK);
     }
 
     #[Route('/logout', name: 'app_auth_logout', methods: ['POST'])]

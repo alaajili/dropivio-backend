@@ -2,22 +2,25 @@
 
 namespace App\Service;
 
+use App\DTO\LoginRequest;
+use App\DTO\RegisterRequest;
+use App\DTO\UserResponse;
+
 interface AuthServiceInterface
 {
     /**
      * Register a new user
      *
-     * @param array $userData User registration data
-     * @return array Array containing user and token, or errors
+     * @param RegisterRequest $registerRequest User registration data
+     * @return UserResponse|array UserResponse DTO with token, or Array containing errors
      */
-    public function register(array $userData): array;
+    public function register(RegisterRequest $registerRequest): UserResponse|array;
     
     /**
      * Authenticate a user and return their details with token
      *
-     * @param string $email User email
-     * @param string $password User password
-     * @return array|null Array containing user and token, or null if authentication fails
+     * @param LoginRequest $loginRequest User login data
+     * @return UserResponse|null UserResponse DTO with token, or null if authentication fails
      */
-    public function login(string $email, string $password): ?array;
+    public function login(LoginRequest $loginRequest): ?UserResponse;
 }
