@@ -2,9 +2,9 @@
 
 namespace App\Service;
 
-use App\DTO\LoginRequest;
-use App\DTO\RegisterRequest;
-use App\DTO\UserResponse;
+use App\Dto\LoginRequest;
+use App\Dto\RegisterRequest;
+use App\Dto\UserResponse;
 use App\Repository\UserRepositoryInterface;
 use Doctrine\ORM\EntityManagerInterface;
 use Lexik\Bundle\JWTAuthenticationBundle\Services\JWTTokenManagerInterface;

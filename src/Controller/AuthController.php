@@ -2,9 +2,9 @@
 
 namespace App\Controller;
 
-use App\DTO\LoginRequest;
-use App\DTO\RegisterRequest;
-use App\DTO\UserResponse;
+use App\Dto\LoginRequest;
+use App\Dto\RegisterRequest;
+use App\Dto\UserResponse;
 use App\Entity\User;
 use App\Service\AuthServiceInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;

@@ -22,28 +22,14 @@ use Doctrine\Common\Collections\ArrayCollection;
 #[ORM\Table(name: '`user`')]
 #[UniqueEntity(fields: ['email'], message: 'There is already an account with this email')]
 #[ApiResource(
+    normalizationContext: ['groups' => ['user:read']],
+    denormalizationContext: ['groups' => ['user:write']],
     operations: [
-        new Get(
-            normalizationContext: ['groups' => ['user:read']],
-            security: "is_granted('ROLE_ADMIN') or object == user"
-        ),
-        new GetCollection(
-            normalizationContext: ['groups' => ['user:read']],
-            security: "is_granted('ROLE_ADMIN')"
-        ),
-        new Post(
-            normalizationContext: ['groups' => ['user:read']],
-            denormalizationContext: ['groups' => ['user:create']],
-            security: "is_granted('ROLE_ADMIN')"
-        ),
-        new Put(
-            normalizationContext: ['groups' => ['user:read']],
-            denormalizationContext: ['groups' => ['user:update']],
-            security: "is_granted('ROLE_ADMIN') or object == user"
-        ),
-        new Delete(
-            security: "is_granted('ROLE_ADMIN')"
-        ),
+        new Get(security: "is_granted('ROLE_ADMIN') or object == user"),
+        new GetCollection(security: "is_granted('ROLE_ADMIN')"),
+        new Post(security: "is_granted('ROLE_ADMIN')"),
+        new Put(security: "is_granted('ROLE_ADMIN') or object == user"),
+        new Delete(security: "is_granted('ROLE_ADMIN')")
     ],
     formats: ['json']
 )]
@@ -56,9 +42,9 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     private ?int $id = null;
 
     #[ORM\Column(length: 180, unique: true)]
-    #[Groups(['user:read', 'user:create', 'user:update', 'product:read'])]
-    #[Assert\NotBlank]
-    #[Assert\Email]
+    #[Groups(['user:read', 'user:write', 'product:read'])]
+    #[Assert\NotBlank(groups: ['user:write'])]
+    #[Assert\Email(groups: ['user:write'])]
     private ?string $email = null;
 
     #[ORM\Column]
@@ -71,22 +57,19 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\Column]
     private ?string $password = null;
 
-    /**
-     * Plain password is used for registration and password change
-     */
-    #[Assert\NotBlank(groups: ['user:create'])]
-    #[Assert\Length(min: 8, groups: ['user:create', 'user:update'])]
-    #[Groups(['user:create', 'user:update'])]
+    #[Assert\NotBlank(groups: ['user:write'])]
+    #[Assert\Length(min: 8, groups: ['user:write'])]
+    #[Groups(['user:write'])]
     private ?string $plainPassword = null;
 
     #[ORM\Column(length: 255)]
-    #[Groups(['user:read', 'user:create', 'user:update', 'product:read'])]
-    #[Assert\NotBlank]
+    #[Groups(['user:read', 'user:write', 'product:read'])]
+    #[Assert\NotBlank(groups: ['user:write'])]
     private ?string $firstName = null;
 
     #[ORM\Column(length: 255)]
-    #[Groups(['user:read', 'user:create', 'user:update', 'product:read'])]
-    #[Assert\NotBlank]
+    #[Groups(['user:read', 'user:write', 'product:read'])]
+    #[Assert\NotBlank(groups: ['user:write'])]
     private ?string $lastName = null;
 
     #[ORM\Column(type: 'datetime_immutable')]
@@ -94,6 +77,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     private \DateTimeImmutable $createdAt;
 
     #[ORM\Column(type: 'datetime_immutable', nullable: true)]
+    #[Groups(['user:read'])]
     private ?\DateTimeImmutable $lastLogin = null;
 
     #[ORM\OneToMany(mappedBy: 'seller', targetEntity: Product::class)]
@@ -115,11 +99,10 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     {
         return $this->email;
     }
-    
+
     public function setEmail(string $email): static
     {
         $this->email = $email;
-
         return $this;
     }
 
@@ -131,7 +114,6 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     public function getRoles(): array
     {
         $roles = $this->roles;
-        // guarantee every user at least has ROLE_USER
         $roles[] = 'ROLE_USER';
         return array_unique($roles);
     }
@@ -139,7 +121,6 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     public function setRoles(array $roles): static
     {
         $this->roles = $roles;
-
         return $this;
     }
 
@@ -151,7 +132,6 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     public function setPassword(string $password): static
     {
         $this->password = $password;
-
         return $this;
     }
 
@@ -163,7 +143,6 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     public function setPlainPassword(?string $plainPassword): static
     {
         $this->plainPassword = $plainPassword;
-
         return $this;
     }
 
@@ -180,7 +159,6 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     public function setFirstName(string $firstName): static
     {
         $this->firstName = $firstName;
-
         return $this;
     }
 
@@ -192,7 +170,6 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     public function setLastName(string $lastName): static
     {
         $this->lastName = $lastName;
-
         return $this;
     }
 
@@ -209,7 +186,6 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     public function setLastLogin(\DateTimeImmutable $lastLogin): static
     {
         $this->lastLogin = $lastLogin;
-
         return $this;
     }
 

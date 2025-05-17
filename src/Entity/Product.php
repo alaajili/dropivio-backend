@@ -17,24 +17,14 @@ use Symfony\Component\Validator\Constraints as Assert;
 #[ORM\Entity(repositoryClass: ProductRepository::class)]
 #[ORM\HasLifecycleCallbacks]
 #[ApiResource(
+    normalizationContext: ['groups' => ['product:read', 'user:read']],
+    denormalizationContext: ['groups' => ['product:write']],
     operations: [
-        new Get(normalizationContext: ['groups' => ['product:read', 'user:read']]),
-        new GetCollection(normalizationContext: ['groups' => ['product:read', 'user:read']]),
-        new Post(
-            security: "is_granted('ROLE_USER')",
-            normalizationContext: ['groups' => ['product:read', 'user:read']],
-            denormalizationContext: ['groups' => ['product:write']]
-        ),
-        new Put(
-            security: "is_granted('ROLE_ADMIN') or object.getSeller() == user",
-            normalizationContext: ['groups' => ['product:read', 'user:read']],
-            denormalizationContext: ['groups' => ['product:write']]
-        ),
-        new Patch(
-            security: "is_granted('ROLE_ADMIN') or object.getSeller() == user",
-            normalizationContext: ['groups' => ['product:read', 'user:read']],
-            denormalizationContext: ['groups' => ['product:write']]
-        ),
+        new Get(),
+        new GetCollection(),
+        new Post(security: "is_granted('ROLE_USER')"),
+        new Put(security: "is_granted('ROLE_ADMIN') or object.getSeller() == user"),
+        new Patch(security: "is_granted('ROLE_ADMIN') or object.getSeller() == user"),
         new Delete(security: "is_granted('ROLE_ADMIN') or object.getSeller() == user")
     ],
     formats: ['json']
@@ -93,6 +83,11 @@ class Product
 
     #[ORM\ManyToOne(inversedBy: 'products')]
     #[ORM\JoinColumn(nullable: false)]
+    #[Groups(['product:read', 'product:write'])]
+    private ?Category $category = null;
+
+    #[ORM\ManyToOne(inversedBy: 'products')]
+    #[ORM\JoinColumn(nullable: false)]
     #[Groups(['product:read'])]
     private ?User $seller = null;
 
@@ -114,7 +109,6 @@ class Product
     public function setTitle(string $title): static
     {
         $this->title = $title;
-
         return $this;
     }
 
@@ -126,7 +120,6 @@ class Product
     public function setShortDescription(string $shortDescription): static
     {
         $this->shortDescription = $shortDescription;
-
         return $this;
     }
 
@@ -138,7 +131,6 @@ class Product
     public function setDescription(string $description): static
     {
         $this->description = $description;
-
         return $this;
     }
 
@@ -150,7 +142,6 @@ class Product
     public function setAbout(?string $about): static
     {
         $this->about = $about;
-
         return $this;
     }
 
@@ -162,7 +153,6 @@ class Product
     public function setPrice(float $price): static
     {
         $this->price = $price;
-
         return $this;
     }
 
@@ -174,7 +164,6 @@ class Product
     public function setThumbnailUrl(string $thumbnailUrl): static
     {
         $this->thumbnailUrl = $thumbnailUrl;
-
         return $this;
     }
 
@@ -186,7 +175,6 @@ class Product
     public function setFileUrl(string $fileUrl): static
     {
         $this->fileUrl = $fileUrl;
-
         return $this;
     }
 
@@ -198,7 +186,6 @@ class Product
     public function setCreatedAt(\DateTimeImmutable $createdAt): static
     {
         $this->createdAt = $createdAt;
-
         return $this;
     }
 
@@ -210,7 +197,6 @@ class Product
     public function setUpdatedAt(\DateTimeImmutable $updatedAt): static
     {
         $this->updatedAt = $updatedAt;
-
         return $this;
     }
 
@@ -218,6 +204,17 @@ class Product
     public function updateTimestamps(): void
     {
         $this->updatedAt = new \DateTimeImmutable();
+    }
+
+    public function getCategory(): ?Category
+    {
+        return $this->category;
+    }
+
+    public function setCategory(?Category $category): static
+    {
+        $this->category = $category;
+        return $this;
     }
 
     public function getSeller(): ?User
@@ -228,7 +225,6 @@ class Product
     public function setSeller(User $seller): static
     {
         $this->seller = $seller;
-
         return $this;
     }
 }
