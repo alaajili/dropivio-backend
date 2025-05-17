@@ -24,7 +24,7 @@ use Doctrine\Common\Collections\ArrayCollection;
 #[ApiResource(
     operations: [
         new Get(
-            normalizationContext: ['groups' => ['user:read', 'product:read']],
+            normalizationContext: ['groups' => ['user:read']],
             security: "is_granted('ROLE_ADMIN') or object == user"
         ),
         new GetCollection(
