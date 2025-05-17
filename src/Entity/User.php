@@ -24,7 +24,7 @@ use Doctrine\Common\Collections\ArrayCollection;
 #[ApiResource(
     operations: [
         new Get(
-            normalizationContext: ['groups' => ['user:read']],
+            normalizationContext: ['groups' => ['user:read', 'product:read']],
             security: "is_granted('ROLE_ADMIN') or object == user"
         ),
         new GetCollection(
@@ -52,11 +52,11 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
-    #[Groups(['user:read'])]
+    #[Groups(['user:read', 'product:read'])]
     private ?int $id = null;
 
     #[ORM\Column(length: 180, unique: true)]
-    #[Groups(['user:read', 'user:create', 'user:update'])]
+    #[Groups(['user:read', 'user:create', 'user:update', 'product:read'])]
     #[Assert\NotBlank]
     #[Assert\Email]
     private ?string $email = null;
@@ -80,12 +80,12 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     private ?string $plainPassword = null;
 
     #[ORM\Column(length: 255)]
-    #[Groups(['user:read', 'user:create', 'user:update'])]
+    #[Groups(['user:read', 'user:create', 'user:update', 'product:read'])]
     #[Assert\NotBlank]
     private ?string $firstName = null;
 
     #[ORM\Column(length: 255)]
-    #[Groups(['user:read', 'user:create', 'user:update'])]
+    #[Groups(['user:read', 'user:create', 'user:update', 'product:read'])]
     #[Assert\NotBlank]
     private ?string $lastName = null;
 
@@ -213,6 +213,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         return $this;
     }
 
+    #[Groups(['product:read'])]
     public function getFullName(): string
     {
         return $this->firstName . ' ' . $this->lastName;

@@ -9,6 +9,7 @@ use ApiPlatform\Metadata\Get;
 use ApiPlatform\Metadata\GetCollection;
 use ApiPlatform\Metadata\Post;
 use ApiPlatform\Metadata\Delete;
+use ApiPlatform\Metadata\Patch;
 use ApiPlatform\Metadata\Put;
 use Symfony\Component\Serializer\Annotation\Groups;
 use Symfony\Component\Validator\Constraints as Assert;
@@ -16,16 +17,21 @@ use Symfony\Component\Validator\Constraints as Assert;
 #[ORM\Entity(repositoryClass: ProductRepository::class)]
 #[ApiResource(
     operations: [
-        new Get(normalizationContext: ['groups' => ['product:read']]),
-        new GetCollection(normalizationContext: ['groups' => ['product:read']]),
+        new Get(normalizationContext: ['groups' => ['product:read', 'user:read']]),
+        new GetCollection(normalizationContext: ['groups' => ['product:read', 'user:read']]),
         new Post(
             security: "is_granted('ROLE_USER')",
-            normalizationContext: ['groups' => ['product:read']],
+            normalizationContext: ['groups' => ['product:read', 'user:read']],
             denormalizationContext: ['groups' => ['product:write']]
         ),
         new Put(
             security: "is_granted('ROLE_ADMIN') or object.getSeller() == user",
-            normalizationContext: ['groups' => ['product:read']],
+            normalizationContext: ['groups' => ['product:read', 'user:read']],
+            denormalizationContext: ['groups' => ['product:write']]
+        ),
+        new Patch(
+            security: "is_granted('ROLE_ADMIN') or object.getSeller() == user",
+            normalizationContext: ['groups' => ['product:read', 'user:read']],
             denormalizationContext: ['groups' => ['product:write']]
         ),
         new Delete(security: "is_granted('ROLE_ADMIN') or object.getSeller() == user")
