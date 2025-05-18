@@ -23,8 +23,7 @@ services:
     # add more service definitions when explicit configuration is needed
     # please note that last definitions always *replace* previous 
     
-    App\State\ProductStateProcessor:
-        decorates: api_platform.doctrine.orm.state.persist_processor
+    App\State\ProductInputProcessor:
         arguments:
-            $decorated: '@.inner'
-        autowire: true
+            $persistProcessor: '@api_platform.doctrine.orm.state.persist_processor'
+        tags: ['api_platform.state_processor']

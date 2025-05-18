@@ -13,22 +13,36 @@ use ApiPlatform\Metadata\Patch;
 use ApiPlatform\Metadata\Put;
 use Symfony\Component\Serializer\Annotation\Groups;
 use Symfony\Component\Validator\Constraints as Assert;
+use App\Dto\ProductInput;
+use App\State\ProductInputProcessor;
 
 #[ORM\Entity(repositoryClass: ProductRepository::class)]
 #[ORM\HasLifecycleCallbacks]
 #[ApiResource(
     normalizationContext: ['groups' => ['product:read', 'user:read']],
-    denormalizationContext: ['groups' => ['product:write']],
     operations: [
         new Get(),
         new GetCollection(),
-        new Post(security: "is_granted('ROLE_USER')"),
-        new Put(security: "is_granted('ROLE_ADMIN') or object.getSeller() == user"),
-        new Patch(security: "is_granted('ROLE_ADMIN') or object.getSeller() == user"),
+        new Post(
+            security: "is_granted('ROLE_USER')",
+            input: ProductInput::class,
+            processor: ProductInputProcessor::class
+        ),
+        new Put(
+            security: "is_granted('ROLE_ADMIN') or object.getSeller() == user",
+            input: ProductInput::class,
+            processor: ProductInputProcessor::class
+        ),
+        new Patch(
+            security: "is_granted('ROLE_ADMIN') or object.getSeller() == user",
+            input: ProductInput::class,
+            processor: ProductInputProcessor::class
+        ),
         new Delete(security: "is_granted('ROLE_ADMIN') or object.getSeller() == user")
     ],
     formats: ['json']
 )]
+
 class Product
 {
     #[ORM\Id]
