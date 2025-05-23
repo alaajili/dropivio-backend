@@ -1,5 +1,12 @@
 <?php
 
+/*
+ * This file is part of the Dropivio company.
+ * (c) Dropivio <it@dropivio.com>
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ */
+
 namespace App\Controller;
 
 use App\Dto\LoginRequest;
@@ -11,14 +18,12 @@ use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
-use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\Security\Core\Authentication\Token\Storage\TokenStorageInterface;
 use Symfony\Component\Security\Core\Authentication\Token\TokenInterface;
 use Symfony\Component\Security\Http\Attribute\CurrentUser;
 use Symfony\Component\Serializer\SerializerInterface;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
 
-#[Route('/api/auth')]
 class AuthController extends AbstractController
 {
     public function __construct(
@@ -28,7 +33,6 @@ class AuthController extends AbstractController
     ) {
     }
 
-    #[Route('/register', name: 'app_auth_register', methods: ['POST'])]
     public function register(Request $request): JsonResponse
     {
         try {
@@ -38,8 +42,17 @@ class AuthController extends AbstractController
                 'json'
             );
             
+            $violations = $this->validator->validate($registerRequest);
+            if (count($violations) > 0) {
+                $errors = [];
+                foreach ($violations as $violation) {
+                    $errors[$violation->getPropertyPath()] = $violation->getMessage();
+                }
+                return $this->json(['errors' => $errors], Response::HTTP_BAD_REQUEST);
+            }
+            
             $result = $this->authService->register($registerRequest);
-            if (isset($result['errors'])) {
+            if (is_array($result) && isset($result['errors'])) {
                 return $this->json(['errors' => $result['errors']], Response::HTTP_BAD_REQUEST);
             }
             
@@ -49,7 +62,6 @@ class AuthController extends AbstractController
         }
     }
 
-    #[Route('/login', name: 'app_auth_login', methods: ['POST'])]
     public function login(Request $request): JsonResponse
     {
         try {
@@ -59,19 +71,27 @@ class AuthController extends AbstractController
                 'json'
             );
             
+            $violations = $this->validator->validate($loginRequest);
+            if (count($violations) > 0) {
+                $errors = [];
+                foreach ($violations as $violation) {
+                    $errors[$violation->getPropertyPath()] = $violation->getMessage();
+                }
+                return $this->json(['errors' => $errors], Response::HTTP_BAD_REQUEST);
+            }
+            
             $userResponse = $this->authService->login($loginRequest);
             
             if (!$userResponse) {
                 return $this->json(['error' => 'Invalid credentials'], Response::HTTP_UNAUTHORIZED);
             }
             
-            return $this->json(['user' => $userResponse], Response::HTTP_OK);
+            return $this->json($userResponse, Response::HTTP_OK);
         } catch (\Exception $e) {
             return $this->json(['error' => 'Login failed: ' . $e->getMessage()], Response::HTTP_INTERNAL_SERVER_ERROR);
         }
     }
 
-    #[Route('/me', name: 'app_auth_me', methods: ['GET'])]
     public function getCurrentUser(#[CurrentUser] ?User $user): JsonResponse
     {
         if (null === $user) {
@@ -80,12 +100,9 @@ class AuthController extends AbstractController
         
         $userResponse = UserResponse::fromEntity($user, '');
         
-        return $this->json([
-            'user' => $userResponse
-        ], Response::HTTP_OK);
+        return $this->json($userResponse, Response::HTTP_OK);
     }
 
-    #[Route('/logout', name: 'app_auth_logout', methods: ['POST'])]
     public function logout(TokenStorageInterface $tokenStorage): JsonResponse
     {
         $token = $tokenStorage->getToken();
