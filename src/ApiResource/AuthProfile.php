@@ -12,6 +12,8 @@ namespace App\ApiResource;
 use ApiPlatform\Metadata\ApiResource;
 use ApiPlatform\Metadata\Get;
 use App\Dto\UserResponse;
+use ApiPlatform\OpenApi\Model\Operation;
+
 
 #[ApiResource(
     shortName: 'Auth',
@@ -20,8 +22,12 @@ use App\Dto\UserResponse;
             uriTemplate: '/auth/me',
             security: 'is_granted("ROLE_USER")',
             controller: 'App\Controller\AuthController::getCurrentUser',
-            description: 'Get the current authenticated user',
+            name: 'api_auth_me',
             output: UserResponse::class,
+            openapi: new Operation(
+                summary: 'Get current authenticated user',
+                description: 'Retrieves the details of the currently authenticated user. This operation requires a valid JWT token in the Authorization header. The response includes user information such as email, roles, and other profile details.',
+            )
         )
     ]
 )]

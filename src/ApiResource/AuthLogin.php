@@ -7,7 +7,6 @@
  * file that was distributed with this source code.
  */
 
-
 declare(strict_types=1);
 
 
@@ -17,17 +16,21 @@ use ApiPlatform\Metadata\ApiResource;
 use ApiPlatform\Metadata\Post;
 use App\Dto\LoginRequest;
 use App\Dto\UserResponse;
+use ApiPlatform\OpenApi\Model\Operation;
 
 #[ApiResource(
     shortName: 'Auth',
-    description: 'Authentication operations',
     operations: [
         new Post(
             uriTemplate: '/auth/login',
             controller: 'App\Controller\AuthController::login',
-            description: 'Login an existing user',
+            name: 'api_auth_login',
             input: LoginRequest::class,
             output: UserResponse::class,
+            openapi: new Operation(
+                summary: 'User Login',
+                description: 'Authenticates a user and returns a JWT token for subsequent requests. The request should include the user\'s email and password. If the credentials are valid, a JWT token is returned, which can be used for authenticated requests.',
+            )
         )
     ]
 )]

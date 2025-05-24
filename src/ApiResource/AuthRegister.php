@@ -13,6 +13,8 @@ use ApiPlatform\Metadata\ApiResource;
 use ApiPlatform\Metadata\Post;
 use App\Dto\RegisterRequest;
 use App\Dto\UserResponse;
+use ApiPlatform\OpenApi\Model\Operation;
+
 
 #[ApiResource(
     shortName: 'Auth',
@@ -20,9 +22,13 @@ use App\Dto\UserResponse;
         new Post(
             uriTemplate: '/auth/register',
             controller: 'App\Controller\AuthController::register',
-            description: 'Register a new user',
+            name: 'api_auth_register',
             input: RegisterRequest::class,
             output: UserResponse::class,
+            openapi: new Operation(
+                summary: 'Register a new user',
+                description: 'Creates a new user account with the provided registration details. The request should include the user\'s email, password, and any other required fields. If successful, it returns the newly created user\'s details along with a JWT token for authentication.',
+            )
         )
     ]
 )]
