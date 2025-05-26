@@ -4,6 +4,11 @@
 # Put parameters here that don't need to change on each machine where the app is deployed
 # https://symfony.com/doc/current/best_practices.html#use-parameters-for-application-configuration
 parameters:
+    backblaze_key_id: '%env(BACKBLAZE_KEY_ID)%'
+    backblaze_application_key: '%env(BACKBLAZE_APPLICATION_KEY)%'
+    backblaze_region: '%env(BACKBLAZE_REGION)%'
+    backblaze_endpoint: '%env(BACKBLAZE_ENDPOINT)%'
+    backblaze_bucket_name: '%env(BACKBLAZE_BUCKET_NAME)%'
 
 services:
     # default configuration for services in *this* file
@@ -27,3 +32,24 @@ services:
         arguments:
             $persistProcessor: '@api_platform.doctrine.orm.state.persist_processor'
         tags: ['api_platform.state_processor']
+
+    App\Factory\S3ClientFactory: ~
+
+    Aws\S3\S3Client:
+        factory: ['@App\Factory\S3ClientFactory', 'create']
+        arguments:
+            $keyId: '%backblaze_key_id%'
+            $applicationKey: '%backblaze_application_key%'
+            $region: '%backblaze_region%'
+            $endpoint: '%backblaze_endpoint%'
+
+    App\Service\FileUpload\FileUploadServiceInterface:
+        alias: App\Service\FileUpload\BackblazeUploadService
+    
+    App\Service\FileUpload\BackblazeUploadService:
+        arguments:
+            $endpoint: '%backblaze_endpoint%'
+            $bucketName: '%backblaze_bucket_name%'
+            $slugger: '@slugger'
+            $logger: '@logger'
+
