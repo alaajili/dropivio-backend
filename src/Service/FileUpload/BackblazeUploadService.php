@@ -40,7 +40,6 @@ class BackblazeUploadService implements FileUploadServiceInterface
                 'Key' => $key,
                 'Body' => fopen($file->getPathname(), 'r'),
                 'ContentType' => $file->getMimeType(),
-                'ACL' => 'public-read',
                 'Metadata' => [
                     'original_name' => $file->getClientOriginalName(),
                     'uploaded_at' => (new \DateTime())->format('Y-m-d H:i:s'),

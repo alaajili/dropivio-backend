@@ -7,7 +7,7 @@
  * file that was distributed with this source code.
  */
 
-namespace App\Service;
+namespace App\Service\Auth;
 
 use App\Dto\LoginRequest;
 use App\Dto\RegisterRequest;

@@ -33,6 +33,33 @@ services:
             $persistProcessor: '@api_platform.doctrine.orm.state.persist_processor'
         tags: ['api_platform.state_processor']
 
+    App\Service\FileUpload\FileUploadServiceInterface:
+        alias: App\Service\FileUpload\BackblazeUploadService
+    
+    App\Factory\ProductDtoFactoryInterface:
+        class: App\Factory\ProductDtoFactory
+
+    App\Service\Response\JsonResponseBuilderInterface:
+        class: App\Service\Response\JsonResponseBuilder
+
+    App\Exception\Handler\ControllerExceptionHandlerInterface:
+        class: App\Exception\Handler\ControllerExceptionHandler
+
+    App\Service\Database\TransactionManagerInterface:
+        class: App\Service\Database\TransactionManager
+
+    App\Service\Authorization\ProductAuthorizationServiceInterface:
+        class: App\Service\Authorization\ProductAuthorizationService
+
+    App\Service\Product\Validator\ProductValidatorInterface:
+        class: App\Service\Product\Validator\ProductValidator
+
+    App\Service\Product\Builder\ProductBuilderInterface:
+        class: App\Service\Product\Builder\ProductBuilder
+
+    App\Service\Product\FileManager\ProductFileManagerInterface:
+        class: App\Service\Product\FileManager\ProductFileManager
+    
     App\Factory\S3ClientFactory: ~
 
     Aws\S3\S3Client:
@@ -43,13 +70,9 @@ services:
             $region: '%backblaze_region%'
             $endpoint: '%backblaze_endpoint%'
 
-    App\Service\FileUpload\FileUploadServiceInterface:
-        alias: App\Service\FileUpload\BackblazeUploadService
-    
     App\Service\FileUpload\BackblazeUploadService:
         arguments:
             $endpoint: '%backblaze_endpoint%'
             $bucketName: '%backblaze_bucket_name%'
             $slugger: '@slugger'
             $logger: '@logger'
-

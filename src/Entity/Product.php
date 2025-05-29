@@ -9,47 +9,13 @@
 
 namespace App\Entity;
 
-use ApiPlatform\Metadata\ApiResource;
 use App\Repository\ProductRepository;
 use Doctrine\ORM\Mapping as ORM;
-use ApiPlatform\Metadata\Get;
-use ApiPlatform\Metadata\GetCollection;
-use ApiPlatform\Metadata\Post;
-use ApiPlatform\Metadata\Delete;
-use ApiPlatform\Metadata\Patch;
-use ApiPlatform\Metadata\Put;
 use Symfony\Component\Serializer\Annotation\Groups;
 use Symfony\Component\Validator\Constraints as Assert;
-use App\Dto\ProductInput;
-use App\State\ProductInputProcessor;
 
 #[ORM\Entity(repositoryClass: ProductRepository::class)]
 #[ORM\HasLifecycleCallbacks]
-#[ApiResource(
-    normalizationContext: ['groups' => ['product:read', 'user:read']],
-    operations: [
-        new Get(),
-        new GetCollection(),
-        new Post(
-            security: "is_granted('ROLE_USER')",
-            input: ProductInput::class,
-            processor: ProductInputProcessor::class
-        ),
-        new Put(
-            security: "is_granted('ROLE_ADMIN') or object.getSeller() == user",
-            input: ProductInput::class,
-            processor: ProductInputProcessor::class
-        ),
-        new Patch(
-            security: "is_granted('ROLE_ADMIN') or object.getSeller() == user",
-            input: ProductInput::class,
-            processor: ProductInputProcessor::class
-        ),
-        new Delete(security: "is_granted('ROLE_ADMIN') or object.getSeller() == user")
-    ],
-    formats: ['json']
-)]
-
 class Product
 {
     #[ORM\Id]
@@ -61,11 +27,13 @@ class Product
     #[ORM\Column(length: 50)]
     #[Groups(['product:read', 'product:write'])]
     #[Assert\NotBlank]
+    #[Assert\Length(max: 50)]
     private ?string $title = null;
 
     #[ORM\Column(length: 150)]
     #[Groups(['product:read', 'product:write'])]
     #[Assert\NotBlank]
+    #[Assert\Length(max: 150)]
     private ?string $shortDescription = null;
 
     #[ORM\Column(type: 'text')]
@@ -75,7 +43,6 @@ class Product
 
     #[ORM\Column(type: 'text', nullable: true)]
     #[Groups(['product:read', 'product:write'])]
-    #[Assert\NotBlank]
     private ?string $about = null;
 
     #[ORM\Column]
@@ -87,11 +54,13 @@ class Product
     #[ORM\Column(length: 255)]
     #[Groups(['product:read', 'product:write'])]
     #[Assert\NotBlank]
+    #[Assert\Url]
     private ?string $thumbnailUrl = null;
 
     #[ORM\Column(length: 255)]
     #[Groups(['product:read', 'product:write'])]
     #[Assert\NotBlank]
+    #[Assert\Url]
     private ?string $fileUrl = null;
 
     #[ORM\Column(type: 'datetime_immutable')]

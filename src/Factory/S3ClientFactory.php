@@ -29,6 +29,8 @@ class S3ClientFactory
                 'secret' => $applicationKey,
             ],
             'use_path_style_endpoint' => true,
+            'request_checksum_calculation' => 'when_required',
+
         ]);
     }
 }

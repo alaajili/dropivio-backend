@@ -13,7 +13,7 @@ use App\Dto\LoginRequest;
 use App\Dto\RegisterRequest;
 use App\Dto\UserResponse;
 use App\Entity\User;
-use App\Service\AuthServiceInterface;
+use App\Service\Auth\AuthServiceInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
