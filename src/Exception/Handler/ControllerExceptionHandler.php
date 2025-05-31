@@ -7,7 +7,7 @@
  * file that was distributed with this source code.
  */
 
-namespace App\Exception\Handler; 
+namespace App\Exception\Handler;
 
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Response;
