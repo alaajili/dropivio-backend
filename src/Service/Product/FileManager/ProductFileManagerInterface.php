@@ -9,13 +9,14 @@
 
 namespace App\Service\Product\FileManager;
 
-use App\Dto\ProductCreateDto;
+use App\Dto\Product\ProductCreateDto;
+use App\Dto\Product\ProductUpdateDto;
 use App\Entity\Product;
 
 interface ProductFileManagerInterface
 {
-    public function uploadFiles(ProductCreateDto $dto): array;
+    public function uploadFiles(ProductCreateDto|ProductUpdateDto $dto): array;
     public function getProductFileUrls(Product $product): array;
     public function cleanupFiles(array $fileUrls): void;
-    public function cleanupOldFiles(array $oldFileUrls, array $newFileUrls, ProductCreateDto $dto): void;
+    public function cleanupOldFiles(array $oldFileUrls, array $newFileUrls, ProductCreateDto|ProductUpdateDto $dto): void;
 }

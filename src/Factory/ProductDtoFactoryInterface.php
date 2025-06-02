@@ -9,10 +9,12 @@
 
 namespace App\Factory;
 
-use App\Dto\ProductCreateDto;
+use App\Dto\Product\ProductCreateDto;
+use App\Dto\Product\ProductUpdateDto;
 use Symfony\Component\HttpFoundation\Request;
 
 interface ProductDtoFactoryInterface
 {
     public function createFromRequest(Request $request): ProductCreateDto;
+    public function createUpdateFromRequest(Request $request): ProductUpdateDto;
 }

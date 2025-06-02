@@ -9,21 +9,30 @@
 
 namespace App\Factory;
 
-use App\Dto\ProductCreateDto;
+use App\Dto\Product\ProductCreateDto;
+use App\Dto\Product\ProductUpdateDto;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 
 class ProductDtoFactory implements ProductDtoFactoryInterface
 {
+    // for debugging purposes, you can inject a logger if needed
+    public function __construct(private readonly \Psr\Log\LoggerInterface $logger)
+    {
+    }
+
     public function createFromRequest(Request $request): ProductCreateDto
     {
-        $title = $request->request->get('title');
-        $shortDescription = $request->request->get('shortDescription');
-        $description = $request->request->get('description');
-        $about = $request->request->get('about');
-        $price = $request->request->get('price');
-        $categoryId = $request->request->get('categoryId');
+        $data = $request->request->all();
+        
+        $title = $data['title'] ?? null;
+        $shortDescription = $data['shortDescription'] ?? null;
+        $description = $data['description'] ?? null;
+        $about = $data['about'] ?? null;
+        $price = $data['price'] ?? null;
+        $categoryId = $data['categoryId'] ?? null;
 
+        // Validation required for creation
         if (empty($title)) {
             throw new BadRequestHttpException('Title is required');
         }
@@ -50,6 +59,32 @@ class ProductDtoFactory implements ProductDtoFactoryInterface
             about: $about,
             price: (float) $price,
             categoryId: (int) $categoryId,
+            thumbnailFile: $thumbnailFile,
+            productFile: $productFile
+        );
+    }
+
+    public function createUpdateFromRequest(Request $request): ProductUpdateDto
+    {
+        $data = $request->request->all();
+
+        $title = $data['title'] ?? null;
+        $shortDescription = $data['shortDescription'] ?? null;
+        $description = $data['description'] ?? null;
+        $about = $data['about'] ?? null;
+        $price = isset($data['price']) && is_numeric($data['price']) ? (float) $data['price'] : null;
+        $categoryId = isset($data['categoryId']) && is_numeric($data['categoryId']) ? (int) $data['categoryId'] : null;
+
+        $thumbnailFile = $request->files->get('thumbnailFile');
+        $productFile = $request->files->get('productFile');
+
+        return new ProductUpdateDto(
+            title: $title,
+            shortDescription: $shortDescription,
+            description: $description,
+            about: $about,
+            price: $price,
+            categoryId: $categoryId,
             thumbnailFile: $thumbnailFile,
             productFile: $productFile
         );

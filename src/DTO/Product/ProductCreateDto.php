@@ -7,7 +7,7 @@
  * file that was distributed with this source code.
  */
 
-namespace App\Dto;
+namespace App\Dto\Product;
 
 use Symfony\Component\HttpFoundation\File\UploadedFile;
 use Symfony\Component\Validator\Constraints as Assert;

@@ -9,7 +9,8 @@
 
 namespace App\Service\Product\FileManager;
 
-use App\Dto\ProductCreateDto;
+use App\Dto\Product\ProductCreateDto;
+use App\Dto\Product\ProductUpdateDto;
 use App\Entity\Product;
 use App\Service\FileUpload\FileUploadServiceInterface;
 use Psr\Log\LoggerInterface;
@@ -22,7 +23,7 @@ class ProductFileManager implements ProductFileManagerInterface
     ) {
     }
 
-    public function uploadFiles(ProductCreateDto $dto): array
+    public function uploadFiles(ProductCreateDto|ProductUpdateDto $dto): array
     {
         $fileUrls = [];
 
@@ -58,7 +59,7 @@ class ProductFileManager implements ProductFileManagerInterface
         }
     }
 
-    public function cleanupOldFiles(array $oldFileUrls, array $newFileUrls, ProductCreateDto $dto): void
+    public function cleanupOldFiles(array $oldFileUrls, array $newFileUrls, ProductCreateDto|ProductUpdateDto $dto): void
     {
         if ($dto->thumbnailFile && $oldFileUrls['thumbnail']) {
             $this->cleanupFile($oldFileUrls['thumbnail']);

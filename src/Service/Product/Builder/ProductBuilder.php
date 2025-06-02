@@ -9,7 +9,8 @@
 
 namespace App\Service\Product\Builder;
 
-use App\Dto\ProductCreateDto;
+use App\Dto\Product\ProductCreateDto;
+use App\Dto\Product\ProductUpdateDto;
 use App\Entity\Product;
 use App\Entity\User;
 use App\Entity\Category;
@@ -22,18 +23,23 @@ class ProductBuilder implements ProductBuilderInterface
         return $this->setProductData($product, $dto, $seller, $category, $fileUrls);
     }
 
-    public function updateProduct(Product $product, ProductCreateDto $dto, Category $category, array $fileUrls): Product
+    public function updateProduct(Product $product, ProductUpdateDto $dto, Category $category, array $fileUrls): Product
     {
         return $this->setProductData($product, $dto, null, $category, $fileUrls);
     }
 
-    private function setProductData(Product $product, ProductCreateDto $dto, ?User $seller, Category $category, array $fileUrls): Product
-    {
-        $product->setTitle($dto->title)
-               ->setShortDescription($dto->shortDescription)
-               ->setDescription($dto->description)
-               ->setAbout($dto->about)
-               ->setPrice($dto->price)
+    private function setProductData(
+        Product $product,
+        ProductCreateDto|ProductUpdateDto $dto,
+        ?User $seller,
+        Category $category,
+        array $fileUrls
+    ): Product {
+        $product->setTitle($dto->title ?? $product->getTitle())
+               ->setShortDescription($dto->shortDescription ?? $product->getShortDescription())
+               ->setDescription($dto->description ?? $product->getDescription())
+               ->setAbout($dto->about ?? $product->getAbout())
+               ->setPrice($dto->price ?? $product->getPrice())
                ->setCategory($category);
 
         if ($seller) {

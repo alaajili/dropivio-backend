@@ -9,7 +9,8 @@
 
 namespace App\Service\Product;
 
-use App\Dto\ProductCreateDto;
+use App\Dto\Product\ProductCreateDto;
+use App\Dto\Product\ProductUpdateDto;
 use App\Entity\Product;
 use App\Entity\User;
 
@@ -54,12 +55,12 @@ interface ProductServiceInterface
      * Updates an existing product with new data.
      *
      * @param Product $product The product entity to update
-     * @param ProductCreateDto $productDto The updated product data
+     * @param ProductUpdateDto $productDto The updated product data
      * @return Product The updated product entity
      * @throws \Symfony\Component\HttpKernel\Exception\BadRequestHttpException When validation fails
      * @throws \Symfony\Component\HttpKernel\Exception\NotFoundHttpException When category is not found
      */
-    public function updateProduct(Product $product, ProductCreateDto $productDto): Product;
+    public function updateProduct(Product $product, ProductUpdateDto $productDto): Product;
 
     /**
      * Deletes a product and cleans up associated files.

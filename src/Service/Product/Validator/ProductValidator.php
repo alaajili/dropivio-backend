@@ -9,7 +9,7 @@
 
 namespace App\Service\Product\Validator;
 
-use App\Dto\ProductCreateDto;
+use App\Dto\Product\ProductCreateDto;
 use App\Entity\Product;
 use App\Entity\Category;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;

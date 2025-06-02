@@ -9,7 +9,8 @@
 
 namespace App\Service\Product;
 
-use App\Dto\ProductCreateDto;
+use App\Dto\Product\ProductCreateDto;
+use App\Dto\Product\ProductUpdateDto;
 use App\Entity\Product;
 use App\Entity\User;
 use App\Repository\CategoryRepository;
@@ -88,18 +89,25 @@ class ProductService implements ProductServiceInterface
         });
     }
 
-    public function updateProduct(Product $product, ProductCreateDto $productDto): Product
+    public function updateProduct(Product $product, ProductUpdateDto $productDto): Product
     {
-        $this->logger->info('Starting product update', [
-            'product_id' => $product->getId(),
-            'title' => $productDto->title,
-        ]);
+        $this->logger->info(
+            'Starting product update (product_id={product_id}, title="{title}")',
+            [
+                'product_id' => $product->getId(),
+                'title' => $productDto->title,
+            ]
+        );
 
         return $this->transactionManager->executeInTransaction(function () use ($product, $productDto) {
             $oldFileUrls = $this->fileManager->getProductFileUrls($product);
             
-            $category = $this->categoryRepository->find($productDto->categoryId);
-            $this->productValidator->validateCategory($category, $productDto->categoryId);
+            $category = $product->getCategory();
+            if ($productDto->categoryId !== null) {
+                $category = $this->categoryRepository->find($productDto->categoryId);
+                $this->productValidator->validateCategory($category, $productDto->categoryId);
+            }
+
 
             $newFileUrls = $this->fileManager->uploadFiles($productDto);
             

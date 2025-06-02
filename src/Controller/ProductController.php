@@ -86,7 +86,7 @@ class ProductController extends AbstractController
             
             $this->productService->checkUpdatePermission($product, $user);
             
-            $productDto = $this->productDtoFactory->createFromRequest($request);
+            $productDto = $this->productDtoFactory->createUpdateFromRequest($request);
             $updatedProduct = $this->productService->updateProduct($product, $productDto);
 
             return $this->responseBuilder->buildProductResponse($updatedProduct);
