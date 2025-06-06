@@ -7,7 +7,7 @@
  * file that was distributed with this source code.
  */
 
-namespace App\ApiResource;
+namespace App\ApiResource\Auth;
 
 use ApiPlatform\Metadata\ApiResource;
 use ApiPlatform\Metadata\Get;

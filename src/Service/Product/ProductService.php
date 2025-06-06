@@ -11,6 +11,7 @@ namespace App\Service\Product;
 
 use App\Dto\Product\ProductCreateDto;
 use App\Dto\Product\ProductUpdateDto;
+use App\Dto\Product\ProductResponseDto;
 use App\Entity\Product;
 use App\Entity\User;
 use App\Repository\CategoryRepository;
@@ -41,7 +42,12 @@ class ProductService implements ProductServiceInterface
     public function getProducts(int $page = 1, int $limit = 20): array
     {
         $offset = ($page - 1) * $limit;
-        return $this->productRepository->findBy([], ['createdAt' => 'DESC'], $limit, $offset);
+        $products = $this->productRepository->findBy([], ['createdAt' => 'DESC'], $limit, $offset);
+        
+        return array_map(
+            fn(Product $product) => ProductResponseDto::fromEntity($product),
+            $products
+        );
     }
 
     public function getProductsCount(): int
@@ -49,19 +55,25 @@ class ProductService implements ProductServiceInterface
         return $this->productRepository->count([]);
     }
 
-    public function getProductById(int $id): ?Product
+    public function getProductById(int $id): ?ProductResponseDto
     {
-        return $this->productRepository->find($id);
+        $product = $this->productRepository->find($id);
+        
+        if ($product === null) {
+            return null;
+        }
+        
+        return ProductResponseDto::fromEntity($product);
     }
 
-    public function createProduct(ProductCreateDto $productDto, User $seller): Product
+    public function createProduct(ProductCreateDto $productDto, User $seller): ProductResponseDto
     {
         $this->logger->info('Starting product creation', [
             'seller_id' => $seller->getId(),
             'title' => $productDto->title,
         ]);
 
-        return $this->transactionManager->executeInTransaction(function () use ($productDto, $seller) {
+        $product = $this->transactionManager->executeInTransaction(function () use ($productDto, $seller) {
             $this->productValidator->validateDto($productDto);
             
             $category = $this->categoryRepository->find($productDto->categoryId);
@@ -87,19 +99,13 @@ class ProductService implements ProductServiceInterface
                 throw $e;
             }
         });
+
+        return ProductResponseDto::fromEntity($product);
     }
 
-    public function updateProduct(Product $product, ProductUpdateDto $productDto): Product
+    public function updateProduct(Product $product, ProductUpdateDto $productDto): ProductResponseDto
     {
-        $this->logger->info(
-            'Starting product update (product_id={product_id}, title="{title}")',
-            [
-                'product_id' => $product->getId(),
-                'title' => $productDto->title,
-            ]
-        );
-
-        return $this->transactionManager->executeInTransaction(function () use ($product, $productDto) {
+        $updatedProduct = $this->transactionManager->executeInTransaction(function () use ($product, $productDto) {
             $oldFileUrls = $this->fileManager->getProductFileUrls($product);
             
             $category = $product->getCategory();
@@ -107,7 +113,6 @@ class ProductService implements ProductServiceInterface
                 $category = $this->categoryRepository->find($productDto->categoryId);
                 $this->productValidator->validateCategory($category, $productDto->categoryId);
             }
-
 
             $newFileUrls = $this->fileManager->uploadFiles($productDto);
             
@@ -122,6 +127,8 @@ class ProductService implements ProductServiceInterface
 
             return $product;
         });
+
+        return ProductResponseDto::fromEntity($updatedProduct);
     }
 
     public function deleteProduct(Product $product): void

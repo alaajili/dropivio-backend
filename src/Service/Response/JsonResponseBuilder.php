@@ -9,7 +9,7 @@
 
 namespace App\Service\Response;
 
-use App\Entity\Product;
+use App\Dto\Product\ProductResponseDto;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Symfony\Component\Serializer\SerializerInterface;
@@ -21,7 +21,7 @@ class JsonResponseBuilder implements JsonResponseBuilderInterface
     ) {
     }
 
-    public function buildProductResponse(?Product $product, int $statusCode = 200): JsonResponse
+    public function buildProductResponse(?ProductResponseDto $product, int $statusCode = 200): JsonResponse
     {
         if (!$product) {
             throw new NotFoundHttpException('Product not found');

@@ -10,7 +10,7 @@
 declare(strict_types=1);
 
 
-namespace App\ApiResource;
+namespace App\ApiResource\Auth;
 
 use ApiPlatform\Metadata\ApiResource;
 use ApiPlatform\Metadata\Post;

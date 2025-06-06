@@ -20,11 +20,14 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
+use App\Repository\ProductRepository;
+use App\Entity\Product;
 
 #[Route('/api/products', name: 'api_products_')]
 class ProductController extends AbstractController
 {
     public function __construct(
+        private readonly ProductRepository $productRepository,
         private readonly ProductServiceInterface $productService,
         private readonly ProductDtoFactoryInterface $productDtoFactory,
         private readonly JsonResponseBuilderInterface $responseBuilder,
@@ -53,6 +56,11 @@ class ProductController extends AbstractController
     {
         try {
             $product = $this->productService->getProductById($id);
+            
+            if ($product === null) {
+                return new JsonResponse(['error' => 'Product not found'], Response::HTTP_NOT_FOUND);
+            }
+            
             return $this->responseBuilder->buildProductResponse($product);
         } catch (\Exception $e) {
             return $this->exceptionHandler->handle($e);
@@ -80,14 +88,19 @@ class ProductController extends AbstractController
     public function update(int $id, Request $request): JsonResponse
     {
         try {
-            $product = $this->productService->getProductById($id);
+            // We still need the entity for permission checks and updates
+            $productEntity = $this->getProductEntity($id);
+            if ($productEntity === null) {
+                return new JsonResponse(['error' => 'Product not found'], Response::HTTP_NOT_FOUND);
+            }
+            
             /** @var User $user */
             $user = $this->getUser();
             
-            $this->productService->checkUpdatePermission($product, $user);
+            $this->productService->checkUpdatePermission($productEntity, $user);
             
             $productDto = $this->productDtoFactory->createUpdateFromRequest($request);
-            $updatedProduct = $this->productService->updateProduct($product, $productDto);
+            $updatedProduct = $this->productService->updateProduct($productEntity, $productDto);
 
             return $this->responseBuilder->buildProductResponse($updatedProduct);
         } catch (\Exception $e) {
@@ -100,16 +113,30 @@ class ProductController extends AbstractController
     public function delete(int $id): JsonResponse
     {
         try {
-            $product = $this->productService->getProductById($id);
+            // We still need the entity for permission checks and deletion
+            $productEntity = $this->getProductEntity($id);
+            if ($productEntity === null) {
+                return new JsonResponse(['error' => 'Product not found'], Response::HTTP_NOT_FOUND);
+            }
+            
             /** @var User $user */
             $user = $this->getUser();
             
-            $this->productService->checkDeletePermission($product, $user);
-            $this->productService->deleteProduct($product);
+            $this->productService->checkDeletePermission($productEntity, $user);
+            $this->productService->deleteProduct($productEntity);
 
             return new JsonResponse(null, Response::HTTP_NO_CONTENT);
         } catch (\Exception $e) {
             return $this->exceptionHandler->handle($e);
         }
+    }
+
+    /**
+     * Helper method to get Product entity directly from repository
+     * This is needed for operations that require the actual entity
+     */
+    private function getProductEntity(int $id): ?Product
+    {
+        return $this->productRepository->find($id);
     }
 }

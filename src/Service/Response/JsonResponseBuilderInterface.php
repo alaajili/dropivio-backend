@@ -9,11 +9,12 @@
 
 namespace App\Service\Response;
 
+use App\Dto\Product\ProductResponseDto;
 use App\Entity\Product;
 use Symfony\Component\HttpFoundation\JsonResponse;
 
 interface JsonResponseBuilderInterface
 {
-    public function buildProductResponse(?Product $product, int $statusCode = 200): JsonResponse;
+    public function buildProductResponse(?ProductResponseDto $product, int $statusCode = 200): JsonResponse;
     public function buildPaginatedResponse(array $products, int $page, int $limit, int $total): JsonResponse;
 }
