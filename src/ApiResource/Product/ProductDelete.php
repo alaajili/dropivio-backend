@@ -9,7 +9,7 @@
 
 declare(strict_types=1);
 
-namespace App\ApiResource;
+namespace App\ApiResource\Product;
 
 use ApiPlatform\Metadata\ApiResource;
 use ApiPlatform\Metadata\Delete;
