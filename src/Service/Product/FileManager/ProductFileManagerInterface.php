@@ -16,7 +16,7 @@ use App\Entity\Product;
 interface ProductFileManagerInterface
 {
     public function uploadFiles(ProductCreateDto|ProductUpdateDto $dto): array;
-    public function getProductFileUrls(Product $product): array;
-    public function cleanupFiles(array $fileUrls): void;
+    public function getProductFileKeys(Product $product): array;
+    public function cleanupFiles(array $fileKeys): void;
     public function cleanupOldFiles(array $oldFileUrls, array $newFileUrls, ProductCreateDto|ProductUpdateDto $dto): void;
 }

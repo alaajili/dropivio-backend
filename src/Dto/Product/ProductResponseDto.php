@@ -11,6 +11,7 @@ namespace App\Dto\Product;
 
 use App\Entity\Product;
 use Symfony\Component\Serializer\Annotation\Groups;
+use App\Service\FileUpload\FileUploadServiceInterface;
 
 class ProductResponseDto
 {
@@ -47,7 +48,7 @@ class ProductResponseDto
     #[Groups(['product:read'])]
     public array $seller;
 
-    public static function fromEntity(Product $product): self
+    public static function fromEntity(Product $product, string $thumbnailUrl = ''): self
     {
         $instance = new self();
         $instance->id = $product->getId();
@@ -56,7 +57,7 @@ class ProductResponseDto
         $instance->description = $product->getDescription();
         $instance->about = $product->getAbout();
         $instance->price = $product->getPrice();
-        $instance->thumbnailUrl = $product->getThumbnailUrl();
+        $instance->thumbnailUrl = $thumbnailUrl;
         $instance->createdAt = $product->getCreatedAt()->format(\DateTimeInterface::ATOM);
         $instance->updatedAt = $product->getUpdatedAt()?->format(\DateTimeInterface::ATOM);
         

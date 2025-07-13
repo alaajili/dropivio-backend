@@ -32,4 +32,9 @@ interface FileUploadServiceInterface
      * Get the public URL for a file
      */
     public function getPublicUrl(string $key): string;
+
+    /**
+     * Get a pre-signed URL for a file
+     */
+    public function getPresignedUrl(string $key, int $expiresInSeconds = 604800): string;
 }

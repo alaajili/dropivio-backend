@@ -52,7 +52,7 @@ class BackblazeUploadService implements FileUploadServiceInterface
                 'original_name' => $file->getClientOriginalName(),
             ]);
 
-            return $this->getPublicUrl($key);
+            return $key;
 
         } catch (AwsException $e) {
             $this->logger->error('Failed to upload file to Backblaze', [
@@ -67,14 +67,17 @@ class BackblazeUploadService implements FileUploadServiceInterface
     public function delete(string $key): bool
     {
         try {
+            // Extract key from URL if full URL is provided
+            $actualKey = $this->extractKeyFromUrl($key) ?? $key;
+            
             $this->s3Client->deleteObject([
                 'Bucket' => $this->bucketName,
-                'Key' => $key,
+                'Key' => $actualKey,
             ]);
 
             $this->logger->info('File deleted successfully', [
                 'bucket' => $this->bucketName,
-                'key' => $key,
+                'key' => $actualKey,
             ]);
 
             return true;
@@ -92,7 +95,8 @@ class BackblazeUploadService implements FileUploadServiceInterface
     public function exists(string $key): bool
     {
         try {
-            return $this->s3Client->doesObjectExist($this->bucketName, $key);
+            $actualKey = $this->extractKeyFromUrl($key) ?? $key;
+            return $this->s3Client->doesObjectExist($this->bucketName, $actualKey);
         } catch (AwsException $e) {
             $this->logger->error('Failed to check file existence', [
                 'error' => $e->getMessage(),
@@ -116,6 +120,35 @@ class BackblazeUploadService implements FileUploadServiceInterface
             str_replace(['https://', 'http://'], '', $this->endpoint),
             $key
         );
+    }
+
+    /**
+     * Generate a pre-signed URL for private bucket access
+     * This is the key method for your use case
+     */
+    public function getPresignedUrl(string $key, int $expiresInSeconds = 604800): string // 7 days default
+    {
+        try {
+            // Extract key from URL if full URL is provided
+            $actualKey = $this->extractKeyFromUrl($key) ?? $key;
+            
+            $command = $this->s3Client->getCommand('GetObject', [
+                'Bucket' => $this->bucketName,
+                'Key' => $actualKey,
+            ]);
+
+            $presignedUrl = $this->s3Client->createPresignedRequest($command, "+{$expiresInSeconds} seconds");
+
+            return (string) $presignedUrl->getUri();
+
+        } catch (AwsException $e) {
+            $this->logger->error('Failed to generate pre-signed URL', [
+                'error' => $e->getMessage(),
+                'key' => $key,
+            ]);
+            
+            throw new \RuntimeException('Failed to generate pre-signed URL: ' . $e->getMessage(), 0, $e);
+        }
     }
 
     /**

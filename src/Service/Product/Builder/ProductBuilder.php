@@ -17,15 +17,15 @@ use App\Entity\Category;
 
 class ProductBuilder implements ProductBuilderInterface
 {
-    public function build(ProductCreateDto $dto, User $seller, Category $category, array $fileUrls): Product
+    public function build(ProductCreateDto $dto, User $seller, Category $category, array $fileKeys): Product
     {
         $product = new Product();
-        return $this->setProductData($product, $dto, $seller, $category, $fileUrls);
+        return $this->setProductData($product, $dto, $seller, $category, $fileKeys);
     }
 
-    public function updateProduct(Product $product, ProductUpdateDto $dto, Category $category, array $fileUrls): Product
+    public function updateProduct(Product $product, ProductUpdateDto $dto, Category $category, array $fileKeys): Product
     {
-        return $this->setProductData($product, $dto, null, $category, $fileUrls);
+        return $this->setProductData($product, $dto, null, $category, $fileKeys);
     }
 
     private function setProductData(
@@ -33,7 +33,7 @@ class ProductBuilder implements ProductBuilderInterface
         ProductCreateDto|ProductUpdateDto $dto,
         ?User $seller,
         Category $category,
-        array $fileUrls
+        array $fileKeys
     ): Product {
         $product->setTitle($dto->title ?? $product->getTitle())
                ->setShortDescription($dto->shortDescription ?? $product->getShortDescription())
@@ -46,12 +46,12 @@ class ProductBuilder implements ProductBuilderInterface
             $product->setSeller($seller);
         }
 
-        if (isset($fileUrls['thumbnail'])) {
-            $product->setThumbnailUrl($fileUrls['thumbnail']);
+        if (isset($fileKeys['thumbnail'])) {
+            $product->setThumbnailKey($fileKeys['thumbnail']);
         }
 
-        if (isset($fileUrls['product'])) {
-            $product->setFileUrl($fileUrls['product']);
+        if (isset($fileKeys['product'])) {
+            $product->setFileKey($fileKeys['product']);
         }
 
         return $product;

@@ -54,14 +54,12 @@ class Product
     #[ORM\Column(length: 255)]
     #[Groups(['product:read', 'product:write'])]
     #[Assert\NotBlank]
-    #[Assert\Url]
-    private ?string $thumbnailUrl = null;
+    private ?string $thumbnailKey = null;
 
     #[ORM\Column(length: 255)]
     #[Groups(['product:read', 'product:write'])]
     #[Assert\NotBlank]
-    #[Assert\Url]
-    private ?string $fileUrl = null;
+    private ?string $fileKey = null;
 
     #[ORM\Column(type: 'datetime_immutable')]
     #[Groups(['product:read'])]
@@ -146,25 +144,25 @@ class Product
         return $this;
     }
 
-    public function getThumbnailUrl(): ?string
+    public function getThumbnailKey(): ?string
     {
-        return $this->thumbnailUrl;
+        return $this->thumbnailKey;
     }
 
-    public function setThumbnailUrl(string $thumbnailUrl): static
+    public function setThumbnailKey(string $thumbnailKey): static
     {
-        $this->thumbnailUrl = $thumbnailUrl;
+        $this->thumbnailKey = $thumbnailKey;
         return $this;
     }
 
-    public function getFileUrl(): ?string
+    public function getFileKey(): ?string
     {
-        return $this->fileUrl;
+        return $this->fileKey;
     }
 
-    public function setFileUrl(string $fileUrl): static
+    public function setFileKey(string $fileKey): static
     {
-        $this->fileUrl = $fileUrl;
+        $this->fileKey = $fileKey;
         return $this;
     }
 

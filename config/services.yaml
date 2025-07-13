@@ -25,13 +25,7 @@ services:
             - '../src/Entity/'
             - '../src/Kernel.php'
 
-    # add more service definitions when explicit configuration is needed
-    # please note that last definitions always *replace* previous 
-    
-    App\State\ProductInputProcessor:
-        arguments:
-            $persistProcessor: '@api_platform.doctrine.orm.state.persist_processor'
-        tags: ['api_platform.state_processor']
+
 
     App\Service\FileUpload\FileUploadServiceInterface:
         alias: App\Service\FileUpload\BackblazeUploadService

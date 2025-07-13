@@ -25,36 +25,36 @@ class ProductFileManager implements ProductFileManagerInterface
 
     public function uploadFiles(ProductCreateDto|ProductUpdateDto $dto): array
     {
-        $fileUrls = [];
+        $fileKeys = [];
 
         if ($dto->thumbnailFile) {
-            $fileUrls['thumbnail'] = $this->fileUploadService->upload(
+            $fileKeys['thumbnail'] = $this->fileUploadService->upload(
                 $dto->thumbnailFile, 
                 'products/thumbnails'
             );
         }
 
         if ($dto->productFile) {
-            $fileUrls['product'] = $this->fileUploadService->upload(
+            $fileKeys['product'] = $this->fileUploadService->upload(
                 $dto->productFile, 
                 'products/files'
             );
         }
 
-        return $fileUrls;
+        return $fileKeys;
     }
 
-    public function getProductFileUrls(Product $product): array
+    public function getProductFileKeys(Product $product): array
     {
         return [
-            'thumbnail' => $product->getThumbnailUrl(),
-            'product' => $product->getFileUrl()
+            'thumbnail' => $product->getThumbnailKey(),
+            'product' => $product->getFileKey()
         ];
     }
 
-    public function cleanupFiles(array $fileUrls): void
+    public function cleanupFiles(array $fileKeys): void
     {
-        foreach ($fileUrls as $fileUrl) {
+        foreach ($fileKeys as $fileUrl) {
             $this->cleanupFile($fileUrl);
         }
     }
