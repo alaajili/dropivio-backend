@@ -1,12 +1,5 @@
 <?php
 
-/*
- * This file is part of the Dropivio company.
- * (c) Dropivio <it@dropivio.com>
- * For the full copyright and license information, please view the LICENSE
- * file that was distributed with this source code.
- */
-
 namespace App\Service\Product;
 
 use App\Dto\Product\ProductCreateDto;
@@ -21,6 +14,7 @@ use App\Service\Database\TransactionManagerInterface;
 use App\Service\Product\Builder\ProductBuilderInterface;
 use App\Service\Product\Validator\ProductValidatorInterface;
 use App\Service\Product\FileManager\ProductFileManagerInterface;
+use App\Service\Cache\CachedThumbnailService;
 use Doctrine\ORM\EntityManagerInterface;
 use Psr\Log\LoggerInterface;
 use App\Repository\ProductRepository;
@@ -38,7 +32,8 @@ class ProductService implements ProductServiceInterface
         private readonly CategoryRepository $categoryRepository,
         private readonly LoggerInterface $logger,
         private readonly ProductRepository $productRepository,
-        private readonly FileUploadServiceInterface $fileUploadService
+        private readonly FileUploadServiceInterface $fileUploadService,
+        private readonly CachedThumbnailService $cachedThumbnailService
     ) {
     }
 
@@ -50,7 +45,7 @@ class ProductService implements ProductServiceInterface
         return array_map(
             fn(Product $product) => ProductResponseDto::fromEntity(
                 $product, 
-                $this->fileUploadService->getPresignedUrl($product->getThumbnailKey())
+                $this->cachedThumbnailService->getThumbnailUrl($product->getThumbnailKey())
             ),
             $products
         );
@@ -72,7 +67,7 @@ class ProductService implements ProductServiceInterface
         
         return ProductResponseDto::fromEntity(
             $product,
-            $this->fileUploadService->getPresignedUrl($product->getThumbnailKey())
+            $this->cachedThumbnailService->getThumbnailUrl($product->getThumbnailKey())
         );
     }
 
@@ -112,7 +107,7 @@ class ProductService implements ProductServiceInterface
             }
         });
 
-        $thumbnailUrl = $this->fileUploadService->getPresignedUrl($product->getThumbnailKey());
+        $thumbnailUrl = $this->cachedThumbnailService->getThumbnailUrl($product->getThumbnailKey());
         return ProductResponseDto::fromEntity($product, $thumbnailUrl);
     }
 
@@ -120,6 +115,7 @@ class ProductService implements ProductServiceInterface
     {
         $updatedProduct = $this->transactionManager->executeInTransaction(function () use ($product, $productDto) {
             $oldFileUrls = $this->fileManager->getProductFileKeys($product);
+            $oldThumbnailKey = $product->getThumbnailKey();
             
             $category = $product->getCategory();
             if ($productDto->categoryId !== null) {
@@ -132,6 +128,10 @@ class ProductService implements ProductServiceInterface
             $this->productBuilder->updateProduct($product, $productDto, $category, $newFileUrls);
             $this->entityManager->flush();
 
+            if (isset($newFileUrls['thumbnail']) && $oldThumbnailKey !== $product->getThumbnailKey()) {
+                $this->cachedThumbnailService->invalidateThumbnailCache($oldThumbnailKey);
+            }
+
             $this->fileManager->cleanupOldFiles($oldFileUrls, $newFileUrls, $productDto);
 
             $this->logger->info('Product updated successfully', [
@@ -141,7 +141,8 @@ class ProductService implements ProductServiceInterface
             return $product;
         });
 
-        return ProductResponseDto::fromEntity($updatedProduct);
+        $thumbnailUrl = $this->cachedThumbnailService->getThumbnailUrl($updatedProduct->getThumbnailKey());
+        return ProductResponseDto::fromEntity($updatedProduct, $thumbnailUrl);
     }
 
     public function deleteProduct(Product $product): void
@@ -149,6 +150,8 @@ class ProductService implements ProductServiceInterface
         $this->logger->info('Starting product deletion', [
             'product_id' => $product->getId(),
         ]);
+
+        $thumbnailKey = $product->getThumbnailKey();
 
         $this->transactionManager->executeInTransaction(function () use ($product) {
             $fileKeys = $this->fileManager->getProductFileKeys($product);
@@ -162,6 +165,9 @@ class ProductService implements ProductServiceInterface
                 'product_id' => $product->getId(),
             ]);
         });
+
+        // Invalidate cache after successful deletion
+        $this->cachedThumbnailService->invalidateThumbnailCache($thumbnailKey);
     }
 
     public function checkUpdatePermission(Product $product, User $user): void
@@ -172,5 +178,18 @@ class ProductService implements ProductServiceInterface
     public function checkDeletePermission(Product $product, User $user): void
     {
         $this->authorizationService->checkDeletePermission($product, $user);
+    }
+
+    /**
+     * Optional: Warmup cache for multiple products (useful for listings)
+     */
+    public function warmupThumbnailCache(array $products): void
+    {
+        $thumbnailKeys = array_map(
+            fn(Product $product) => $product->getThumbnailKey(),
+            $products
+        );
+        
+        $this->cachedThumbnailService->warmupThumbnailCache($thumbnailKeys);
     }
 }

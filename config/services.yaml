@@ -70,3 +70,7 @@ services:
             $bucketName: '%backblaze_bucket_name%'
             $slugger: '@slugger'
             $logger: '@logger'
+    
+    App\Service\Cache\CachedThumbnailService:
+        arguments:
+            $cache: '@thumbnail_cache'
